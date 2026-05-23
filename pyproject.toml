@@ -1,0 +1,16 @@
+[project]
+name = "meeting-action-item-extractor"
+version = "0.1.0"
+description = "Extracts structured action items from Zoom meeting transcripts and sends email recaps"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "python-multipart",
+    "python-dotenv",
+    "anthropic",
+    "resend",
+    "networkx",
+    "jinja2",
+]

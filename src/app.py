@@ -12,16 +12,16 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel
 from fastapi.responses import HTMLResponse
 
-from extractor import extract_meeting_info
-from formatter import format_html, format_plain
-from graph_store import (
+from .extractor import extract_meeting_info
+from .formatter import format_html, format_plain
+from .graph_store import (
     add_triples,
     get_overloaded,
     get_pending,
     get_person_tasks,
     get_project_status,
 )
-from notifier import send_email
+from .notifier import send_email
 
 load_dotenv()
 

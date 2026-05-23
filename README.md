@@ -20,11 +20,11 @@ Transcript → Claude API (extract) → Formatter (HTML) → Resend (email)
 ```
 
 Each module does one thing:
-- `extractor.py` — Claude API call, structured extraction prompt
-- `formatter.py` — JSON to HTML email (Jinja2 template)
-- `notifier.py` — email via Resend API
-- `graph_store.py` — NetworkX knowledge graph for cross-meeting queries
-- `app.py` — FastAPI endpoints tying it all together
+- `src/extractor.py` — Claude API call, structured extraction prompt
+- `src/formatter.py` — JSON to HTML email (Jinja2 template)
+- `src/notifier.py` — email via Resend API
+- `src/graph_store.py` — NetworkX knowledge graph for cross-meeting queries
+- `src/app.py` — FastAPI endpoints tying it all together
 
 ### 2. n8n Workflow (Low-Code)
 
@@ -34,12 +34,12 @@ Same pipeline as a visual workflow — webhook trigger, HTTP calls to Claude and
 
 ### Tradeoffs
 
-| | Python | n8n |
-|---|---|---|
-| Setup | `pip install`, run server | Import JSON, configure credentials |
-| Extensibility | Add endpoints, graph queries, tests | Add nodes visually |
-| Email formatting | Jinja2 template (clean) | Inline HTML in JS (works but harder to maintain) |
-| Best for | Production, complex logic | Quick deployment, non-technical teams |
+|          | Python                                        | n8n                                              |
+|----------|-----------------------------------------------|---------------------------------------------------|
+| Setup    | `uv sync`, run server                         | Import JSON, configure credentials                |
+| Extend   | Add endpoints, graph queries, tests           | Add nodes visually                                |
+| Email    | Jinja2 template (clean)                       | Inline HTML in JS (works but harder to maintain)  |
+| Best for | Production, complex logic                     | Quick deployment, non-technical teams             |
 
 ## Key Decisions
 
@@ -52,17 +52,16 @@ Same pipeline as a visual workflow — webhook trigger, HTTP calls to Claude and
 ## Output
 
 The email includes:
+
 - Meeting title, date, and time
 - Summary (decisions + blockers)
 - Attendees
 - Action items grouped by owner (color-coded), with due dates and priority badges
 - Next meeting date
 
-
 ![n8n Workflow](screenshots/workflow.png)
+
 ![Sample Email](screenshots/email-output.png)
-
-
 
 ## What I'd Improve Next
 
@@ -78,19 +77,18 @@ The email includes:
 
 ```bash
 # Install dependencies
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+uv sync
 
 # Configure environment
 cp .env.example .env
 # Edit .env with your ANTHROPIC_API_KEY, RESEND_API_KEY, EMAIL_FROM, EMAIL_TO
 
 # Start server
-uvicorn app:app --reload
+uvicorn src.app:app --reload
 ```
 
 Test:
+
 ```bash
 # From transcript text
 curl -X POST http://localhost:8000/extract \
@@ -98,7 +96,7 @@ curl -X POST http://localhost:8000/extract \
   -d '{"transcript": "meeting notes here"}'
 
 # From file
-curl -X POST http://localhost:8000/upload -F "file=@transcript.txt"
+curl -X POST http://localhost:8000/upload -F "file=@docs/transcript.txt"
 ```
 
 API docs at `http://localhost:8000/docs`.
@@ -111,21 +109,22 @@ API docs at `http://localhost:8000/docs`.
    - **Resend API**: header `Authorization`, value = `Bearer re_xxx`
 3. Activate the workflow
 4. Test:
+
 ```bash
-jq -Rs '{"text": .}' transcript.txt | curl -X POST \
+jq -Rs '{"text": .}' docs/transcript.txt | curl -X POST \
   "http://localhost:5678/webhook-test/zoom-notes" \
   -H "Content-Type: application/json" -d @-
 ```
 
 ## API Endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/extract` | Extract from transcript text (auto-sends email) |
-| POST | `/upload` | Extract from uploaded .txt file |
-| POST | `/webhook` | Zoom webhook compatible |
-| POST | `/notify` | Re-send email for last extraction |
-| GET | `/graph/person/{name}/tasks` | All tasks for a person |
-| GET | `/graph/project/{name}/status` | All items for a project |
-| GET | `/graph/pending` | All open/pending items |
-| GET | `/graph/overloaded` | People with 3+ pending tasks |
+| Method | Path                             | Description                            |
+|--------|----------------------------------|----------------------------------------|
+| POST   | `/extract`                       | Extract from transcript text (auto-sends email) |
+| POST   | `/upload`                        | Extract from uploaded .txt file        |
+| POST   | `/webhook`                       | Zoom webhook compatible                |
+| POST   | `/notify`                        | Re-send email for last extraction      |
+| GET    | `/graph/person/{name}/tasks`     | All tasks for a person                 |
+| GET    | `/graph/project/{name}/status`   | All items for a project                |
+| GET    | `/graph/pending`                 | All open/pending items                 |
+| GET    | `/graph/overloaded`              | People with 3+ pending tasks           |
